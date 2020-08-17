@@ -193,8 +193,8 @@ class BasicAuthenticationProxy {
             }
 
             connection.setRequestProperty(HEADER_AUTHORIZATION, "Basic $base64Credentials")
-            connection.setRequestProperty(HEADER_CONTENT_TYPE, CONTENT_TYPE)
             connection.setRequestProperty(HEADER_CONTENT_LENGTH, soapLogin.length.toString())
+            connection.setRequestProperty(HEADER_CONTENT_TYPE, CONTENT_TYPE)
             connection.setRequestProperty(HEADER_SOAP_ACTION, SOAP_ACTION)
             connection.requestMethod = "POST"
             connection.doOutput = true
