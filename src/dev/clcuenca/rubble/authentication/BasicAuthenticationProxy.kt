@@ -13,6 +13,13 @@ import javax.xml.parsers.DocumentBuilder
 import javax.xml.parsers.DocumentBuilderFactory
 import kotlin.concurrent.thread
 
+/**
+ * Class that handles a basic user's authentication with the server. Provides a listener interface that
+ * returns the [LoginResult] to the listener
+ *
+ * @author Carlos L. Cuenca
+ * @date 08/17/2020
+ */
 class BasicAuthenticationProxy {
 
     /// --------------
