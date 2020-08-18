@@ -2,8 +2,8 @@ package dev.clcuenca.rubble.configuration
 
 import dev.clcuenca.rubble.authentication.BasicAuthenticationProxy
 import dev.clcuenca.rubble.authentication.LoginResult
-import dev.clcuenca.rubble.camera.Camera
 import org.w3c.dom.Document
+import org.w3c.dom.NodeList
 import java.io.*
 import java.net.URL
 import java.nio.charset.StandardCharsets
@@ -15,14 +15,7 @@ import javax.xml.parsers.DocumentBuilder
 import javax.xml.parsers.DocumentBuilderFactory
 import kotlin.concurrent.thread
 
-/**
- * Pulls the entire configuration of a server and callback with a [ServerConfiguration]
- * instance with the applicable data.
- *
- * @author Carlos L. Cuenca
- * @date 08/17/2020
- */
-class ConfigurationProxy {
+class ConfigurationRecordersProxy {
 
     /// --------------
     /// Static Members
@@ -33,7 +26,7 @@ class ConfigurationProxy {
         /// Private Static Members
 
         private const val API_ADDRESS           = "/ManagementServer/ServerCommandService.svc"
-        private const val SOAP_ACTION           = "http://videoos.net/2/XProtectCSServerCommand/IServerCommandService/GetConfiguration"
+        private const val SOAP_ACTION           = "http://videoos.net/2/XProtectCSServerCommand/IServerCommandService/GetConfigurationRecorders"
         private const val HEADER_SOAP_ACTION    = "SOAPAction"
         private const val HEADER_CONTENT_LENGTH = "Content-Length"
         private const val HEADER_CONTENT_TYPE   = "Content-Type"
@@ -42,21 +35,6 @@ class ConfigurationProxy {
         private const val PROTOCOL_SSL          = "SSL"
         private const val CONTENT_TYPE          = "text/xml; charset=utf-8"
         private const val EMPTY_TOKEN           = ""
-
-        /// -------
-        /// Indices
-
-        const val COVERAGE_DEPTH         = 0
-        const val COVERAGE_DIRECTION     = 1
-        const val COVERAGE_FIELD_OF_VIEW = 2
-        const val DESCRIPTION            = 3
-        const val DEVICE_ID              = 4
-        const val DEVICE_INDEX           = 5
-        const val GIS_POINT              = 6
-        const val HARDWARE_ID            = 7
-        const val NAME                   = 9
-        const val RECORDER_ID            = 10
-        const val SHORT_NAME             = 11
 
         /// ----------------------
         /// Private Static Methods
@@ -82,9 +60,9 @@ class ConfigurationProxy {
             return "<?xml version=\"1.0\" encoding=\"utf-8\"?>" +
                     "<soap:Envelope xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">" +
                     "<soap:Body>" +
-                    "<GetConfiguration xmlns=\"http://videoos.net/2/XProtectCSServerCommand\">" +
+                    "<GetConfigurationRecorders xmlns=\"http://videoos.net/2/XProtectCSServerCommand\">" +
                     "<currentToken>${token}</currentToken>" +
-                    "</GetConfiguration>" +
+                    "</GetConfigurationRecorders>" +
                     "</soap:Body>" +
                     "</soap:Envelope>"
 
@@ -176,7 +154,7 @@ class ConfigurationProxy {
 
                 val returnSoap = readInputStream(connection.inputStream)
 
-                listener?.configurationRetrievalSuccessful(parseSuccessXML(returnSoap))
+                listener?.configurationRetrievalSuccessful(returnSoap)
 
             }
 
@@ -222,7 +200,7 @@ class ConfigurationProxy {
 
                 val returnSoap = readInputStream(connection.inputStream)
 
-                listener?.configurationRetrievalSuccessful(parseSuccessXML(returnSoap))
+                listener?.configurationRetrievalSuccessful(returnSoap)
 
             }
 
@@ -316,61 +294,12 @@ class ConfigurationProxy {
 
     }
 
-    /**
-     * Parses a successful login's XML and loads the data onto an instance of [LoginResult]
-     * to be sent to the applicable [Listener]
-     *
-     * @param xml The successful response's xml
-     */
-    private fun parseSuccessXML(xml: String): ServerConfiguration {
-
-        val serverConfiguration = ServerConfiguration()
-
-        val factory  : DocumentBuilderFactory = DocumentBuilderFactory.newInstance()
-        val builder  : DocumentBuilder = factory.newDocumentBuilder()
-        val document : Document = builder.parse(ByteArrayInputStream(xml.toByteArray()))
-
-        val cameras = document.getElementsByTagName("CameraInfo")
-
-        for(index in 0 until cameras.length) {
-
-            // Pull the camera information from the current camera
-            val cameraInfo = cameras.item(index).childNodes
-            val camera     = Camera()
-
-            for(jindex in 0 until cameraInfo.length) {
-
-                if(jindex == DEVICE_ID) {
-
-                    camera.GUID = cameraInfo.item(jindex).textContent
-
-                }
-
-                if(jindex == NAME) {
-
-                    camera.name = cameraInfo.item(jindex).textContent
-
-                }
-
-            }
-
-            serverConfiguration.cameras.add(camera)
-
-        }
-
-        return serverConfiguration
-
-    }
-
     /// ----------
     /// Interfaces
 
-    /**
-     * Listener interface that callback when the Server has returned a Server Configuration
-     */
     interface Listener {
 
-        fun configurationRetrievalSuccessful(serverConfiguration: ServerConfiguration)
+        fun configurationRetrievalSuccessful(soap: String)
         fun configurationRetrievalFailed(message: String)
 
     }
