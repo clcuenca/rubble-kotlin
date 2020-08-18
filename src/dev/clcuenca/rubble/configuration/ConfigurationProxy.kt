@@ -1,10 +1,9 @@
 package dev.clcuenca.rubble.configuration
 
 import dev.clcuenca.rubble.authentication.BasicAuthenticationProxy
-import dev.clcuenca.rubble.authentication.BasicAuthenticationProxy.Listener
 import dev.clcuenca.rubble.authentication.LoginResult
 import org.w3c.dom.Document
-import org.w3c.dom.Node
+import org.w3c.dom.NodeList
 import java.io.*
 import java.net.URL
 import java.nio.charset.StandardCharsets
@@ -62,7 +61,7 @@ class ConfigurationProxy {
                     "<soap:Envelope xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">" +
                     "<soap:Body>" +
                     "<GetConfiguration xmlns=\"http://videoos.net/2/XProtectCSServerCommand\">" +
-                    "<token>${token}</token>" +
+                    "<currentToken>${token}</currentToken>" +
                     "</GetConfiguration>" +
                     "</soap:Body>" +
                     "</soap:Envelope>"
@@ -309,15 +308,15 @@ class ConfigurationProxy {
         val builder  : DocumentBuilder = factory.newDocumentBuilder()
         val document : Document = builder.parse(ByteArrayInputStream(xml.toByteArray()))
 
-        val token            : Node = document.getElementsByTagName("Token").item(0)
-        val timeToLive       : Node = document.getElementsByTagName("MicroSeconds").item(0)
-        val registrationTime : Node = document.getElementsByTagName("RegistrationTime").item(0)
+        val cameraGUIDS : NodeList = document.getElementsByTagName("Cameras")
+
+        for(index in 0..cameraGUIDS.length - 1) {
+
+            serverConfiguration.cameraGUIDS.add(cameraGUIDS.item(index).textContent)
+
+        }
 
         serverConfiguration.soap = xml
-
-        //loginResult.token            = token.textContent
-        //loginResult.timeToLive       = timeToLive.textContent.toLong()
-        //loginResult.registrationTime = registrationTime.textContent
 
         return serverConfiguration
 

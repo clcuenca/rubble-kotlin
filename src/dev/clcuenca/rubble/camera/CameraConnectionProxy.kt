@@ -85,15 +85,17 @@ class CameraConnectionProxy {
      */
     var port     : Int    = DEFAULT_PORT
 
+    var listener : Listener? = null
+
     /**
      * Attempts to create a new socket to the server with the given host name & port.
      * This method requires that the connection be given a valid token after authenticating
      * the user, and will always attempt to create a new connection, thus, it is the implementor's
      * responsibility to close the socket elsewhere
      */
-    fun connect(): Socket? {
+    fun connect() {
 
-        var socket : Socket? = null
+        var socket : Socket?
 
         thread (start = true) {
 
@@ -126,6 +128,7 @@ class CameraConnectionProxy {
                         token
                     )
                 )
+
                 outputStream?.flush()
 
                 // We get the response from the server to validate the connection request
@@ -133,9 +136,7 @@ class CameraConnectionProxy {
                 val reader      = BufferedReader(InputStreamReader(inputStream))
                 val response    = reader.readLine()
 
-                // Using an XMLPullParser
-
-                System.out.println("Response: " + response)
+                listener?.cameraConnectionEstablished(guid, socket)
 
             } catch(ioException: IOException) {
 
@@ -143,7 +144,7 @@ class CameraConnectionProxy {
 
                 socket = null
 
-                throw ConnectionErrorException(ioException.message.toString())
+                listener?.cameraConnectionFailed(guid)
 
             } catch (timeoutException: TimeoutException) {
 
@@ -151,7 +152,7 @@ class CameraConnectionProxy {
 
                 socket = null
 
-                throw ConnectionErrorException(timeoutException.message.toString())
+                listener?.cameraConnectionFailed(guid)
 
             } catch (illegalBlockingModeException: IllegalBlockingModeException) {
 
@@ -159,9 +160,7 @@ class CameraConnectionProxy {
 
                 socket = null
 
-                throw ConnectionErrorException(
-                    illegalBlockingModeException.message.toString()
-                )
+                listener?.cameraConnectionFailed(guid)
 
             } catch (illegalArgumentException: IllegalArgumentException) {
 
@@ -169,13 +168,21 @@ class CameraConnectionProxy {
 
                 socket = null
 
-                throw ConnectionErrorException(illegalArgumentException.message.toString())
+                listener?.cameraConnectionFailed(guid)
 
             }
 
         }
 
-        return socket
+    }
+
+    /// ----------
+    /// Interfaces
+
+    interface Listener {
+
+        fun cameraConnectionEstablished(cameraGUID: String, cameraSocket: Socket?)
+        fun cameraConnectionFailed(cameraGUID: String)
 
     }
 
